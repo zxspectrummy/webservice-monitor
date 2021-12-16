@@ -6,7 +6,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
 RUN npm i -g nodemon
 
 COPY requirements.txt /usr/src/app/requirements.txt
+COPY exporter.py /usr/src/app/
+
 WORKDIR /usr/src/app
 RUN pip3 install -r requirements.txt
-COPY exporter.py /usr/src/app/
 CMD nodemon --exec python3 exporter.py

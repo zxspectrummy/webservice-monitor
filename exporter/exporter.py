@@ -1,23 +1,35 @@
-import time
-import random
+import urllib.parse
+from http.server import HTTPServer
+
 import requests
-from prometheus_client import start_http_server, Gauge
+from prometheus_client import Gauge, MetricsHandler
 
 HTTP_STATUS_CODE = Gauge('http_status_code', "HTTP Status Code")
 
-url = ''
 
+class RequestHandler(MetricsHandler):
+    def do_GET(self):
 
-def get_metrics():
-    try:
-        HTTP_STATUS_CODE.set(requests.get(url).status_code)
-    except requests.exceptions.ConnectionError:
-        HTTP_STATUS_CODE.set(0)
+        parsed_path = urllib.parse.urlsplit(self.path)
+        query = urllib.parse.parse_qs(parsed_path.query)
+        print(self.path, query)
+
+        if "target" in query:
+            endpoint = query['target'][0]
+
+            try:
+                http_status_code = requests.get(endpoint).status_code
+                HTTP_STATUS_CODE.set(http_status_code)
+            except requests.exceptions.ConnectionError:
+                HTTP_STATUS_CODE.set(0)
+            return super(RequestHandler, self).do_GET()
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"No target defined\n")
 
 
 if __name__ == '__main__':
-    # Start up the server to expose the metrics.
-    start_http_server(8000)
-    while True:
-        get_metrics()
-        time.sleep(random.randrange(1, 10))
+    server_address = ('', int(8000))
+    HTTPServer(server_address, RequestHandler).serve_forever()
+

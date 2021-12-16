@@ -1,0 +1,4 @@
+- targets:
+  - https://api.us-west-1.saucelabs.com/v1/magnificent/
+  - http://prometheus.io
+  - http://flakyhost

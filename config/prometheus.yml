@@ -11,8 +11,19 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'magnificient-service'
-    metrics_path: '/metrics'
-    scheme: http
-    static_configs:
-      - targets: [ 'webservice-exporter:8000' ]
+  - job_name: 'http-status-code'
+    metrics_path: '/probe'
+    file_sd_configs:
+      - files: ['targets.yml']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: (.*)(:80)?
+        target_label: __param_target
+      - source_labels: [__param_target]
+        regex: (.*)
+        target_label: instance
+        replacement: ${1}
+      - source_labels: []
+        regex: .*
+        target_label: __address__
+        replacement: webservice-probe-exporter:8000
