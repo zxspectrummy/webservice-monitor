@@ -1,6 +1,21 @@
 groups:
-  - name: DemoAlerts
+  - name: SelfMonitoring
     rules:
-      - alert: InstanceDown
-        expr: up{job="magnificient-service"} < 1
+      - alert: PrometheusTargetMissing
+        expr: up == 0
         for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Prometheus target missing (instance {{ $labels.instance }})
+          description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - name: WebserviceMonitor
+    rules:
+      - alert: HTTPErrorFailureRateHigh
+        expr: 'avg_over_time(http_status_code[1m])>=400'
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Multiple failures HTTP status code failures occurred during the last minute (instance {{ $labels.instance }})
+          description: "The last status code is returned\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

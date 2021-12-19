@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  webservice-probe-exporter:
+    build: ./exporter
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config:/config
+      - ./exporter/exporter.py:/usr/src/app/exporter.py
+    expose: 
+      - 8000    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:v2.32.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config:/config
+      - prometheus-data:/prometheus
+    expose:
+      - 9090
+    healthcheck:
+      test: ["CMD", "wget", "http://localhost:9090"]
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 10s
+    command: --config.file=/config/prometheus.yml --log.level=debug
+
+  grafana:
+    image: grafana/grafana:8.3.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/grafana/dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/dashboard-provider.yaml
+      - ./config/grafana/prometheus.yaml:/etc/grafana/provisioning/datasources/prometheus.yaml
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards/
+
+    depends_on: 
+      - "prometheus"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  prometheus-data:
