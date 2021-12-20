@@ -4,6 +4,8 @@ from http.server import HTTPServer
 import requests
 from prometheus_client import Gauge, MetricsHandler
 
+PORT = 8000
+
 HTTP_STATUS_CODE = Gauge('http_status_code', "HTTP Status Code")
 
 
@@ -16,7 +18,6 @@ class RequestHandler(MetricsHandler):
 
         if "target" in query:
             endpoint = query['target'][0]
-
             try:
                 http_status_code = requests.get(endpoint).status_code
                 HTTP_STATUS_CODE.set(http_status_code)
@@ -29,7 +30,11 @@ class RequestHandler(MetricsHandler):
             self.wfile.write(b"No target defined\n")
 
 
-if __name__ == '__main__':
-    server_address = ('', int(8000))
+def start_http_server():
+    server_address = ('', int(PORT))
     HTTPServer(server_address, RequestHandler).serve_forever()
+
+
+if __name__ == '__main__':
+    start_http_server()
 
