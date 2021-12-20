@@ -1,0 +1,33 @@
+rule_files:
+  - alerts.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{instance="foo"}'
+        values: '0'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: PrometheusTargetMissing
+        exp_alerts:
+            - exp_labels:
+                  severity: critical
+                  instance: foo
+              exp_annotations:
+                  summary: "Prometheus target missing (instance foo)"
+                  description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = 0\n  LABELS = map[__name__:up instance:foo]"
+  - interval: 1m
+    input_series:
+      - series: 'http_status_code{instance="foo"}'
+        values: '400+0x5'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: HTTPErrorFailureRateHigh
+        exp_alerts:
+            - exp_labels:
+                  severity: critical
+                  instance: foo
+              exp_annotations:
+                  summary: "Multiple failures HTTP status code failures occurred during the last minute (instance foo)"
+                  description: "The last status code is returned\n  VALUE = 400\n  LABELS = map[instance:foo]"
+
